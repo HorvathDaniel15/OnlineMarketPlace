@@ -1,4 +1,5 @@
 ﻿using OnlineMarketPlace.Models;
+using OnlineMarketPlace.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,34 +10,67 @@ namespace OnlineMarketPlace.Logic
 {
     public class OrderItemLogic : IOrderItemLogic
     {
-        public Task AddProductToOrderAsync(Order order, Product product, int quantity)
+        private readonly IRepository<OrderItem> _orderItemRepository;
+        private readonly IRepository<Order> _orderRepository;
+
+        public OrderItemLogic(IRepository<OrderItem> orderItemRepository, IRepository<Order> orderRepository)
         {
-            throw new NotImplementedException();
+            _orderItemRepository = orderItemRepository;
+            _orderRepository = orderRepository;
         }
 
-        public Task CreateOrderItemAsync(OrderItem orderItem)
+        public async Task AddProductToOrderAsync(Order order, Product product, int quantity)
         {
-            throw new NotImplementedException();
+            var orderItem = new OrderItem
+            {
+                Product = product,
+                Quantity = quantity
+            };
+            order.OrderItems.Add(orderItem);
+            await _orderRepository.UpdateAsync(order);
         }
 
-        public Task DeleteOrderItemAsync(int id)
+        public async Task CreateOrderItemAsync(OrderItem orderItem)
         {
-            throw new NotImplementedException();
+            if (orderItem == null)
+            {
+                throw new ArgumentNullException(nameof(orderItem), "A rendelt termék nem lehet null");
+            }
+            await _orderItemRepository.CreateAsync(orderItem);
         }
 
-        public Task<IEnumerable<OrderItem>> GetAllOrderItemAsync()
+        public async Task DeleteOrderItemAsync(int id)
         {
-            throw new NotImplementedException();
+            var orderItem = await _orderItemRepository.ReadAsync(id);
+            if (orderItem == null)
+            {
+                throw new Exception("A rendelt termék nem létezik");
+            }
+            await _orderItemRepository.DeleteAsync(id);
         }
 
-        public Task<OrderItem> GetOrderItemByIdAsync(int id)
+        public async Task<IEnumerable<OrderItem>> GetAllOrderItemAsync()
         {
-            throw new NotImplementedException();
+            return await _orderItemRepository.ReadAllAsync();
         }
 
-        public Task UpdateOrderItemAsync(OrderItem orderItem)
+        public async Task<OrderItem> GetOrderItemByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var orderItem = await _orderItemRepository.ReadAsync(id);
+            if (orderItem == null)
+            {
+                throw new Exception("A rendelt termék nem létezik");
+            }
+            return orderItem;
+        }
+
+        public async Task UpdateOrderItemAsync(OrderItem orderItem)
+        {
+            if (orderItem == null)
+            {
+                throw new ArgumentNullException(nameof(orderItem), "A rendelt termék nem található");
+            }
+            await _orderItemRepository.UpdateAsync(orderItem);
         }
     }
 }
